@@ -4,7 +4,8 @@
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [compojure "1.5.1"]
-                 [ring/ring-defaults "0.2.1"]]
+                 [ring/ring-defaults "0.2.1"]
+                 [metosin/compojure-api "1.2.0-alpha5"]]
   :plugins [[lein-ring "0.9.7"]]
   :ring {:handler otaservice.handler/app
          :nrepl {:start? true
