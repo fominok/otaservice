@@ -21,14 +21,13 @@
 (defn find-user [id pass]
   (if (and (= id "yolo") (= pass "swag"))
     {:id "yolo"}
-    {}))
+    nil))
 
 (defn login-handler [request]
-  (let [user (find-user (:username request)
-                        (:password request))
-        token (jwt/sign {:user (:id user)} secret)]
-    (rh/ok {:token token
-            :user (:id user)})))
+  (if-let [user (find-user (:username request)
+                        (:password request))]
+    (rh/ok {:token (jwt/sign {:user (:id user)} secret)})
+    (rh/forbidden {:reason "Wrong credentials"})))
 
 (defn ota-update
   "Performs OTA update for ESP8266"
@@ -51,8 +50,11 @@
             :tags ["api1"]
 
             (sw/POST "/login" []
-                     :summary "authorize and receive jwt token"
                      :body [creds Credentials]
+                     :responses {403 {:schema {:reason s/Str}
+                                      :description "No user with this login & pass found."}}
+                     :return {:token s/Str}
+                     :summary "authorize and receive jwt token"
                      (login-handler creds))
 
             (sw/GET "/plus" []
