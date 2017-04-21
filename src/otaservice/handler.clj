@@ -6,7 +6,29 @@
             [clojure.java.io :as io]
             [compojure.api.sweet :as sw]
             [schema.core :as s]
-            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
+            [buddy.auth.backends :as backends]
+            [buddy.auth.middleware :refer [wrap-authentication]]
+            [buddy.sign.jwt :as jwt]
+            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]))
+
+(def secret "lolsecretjk")
+(def backend (backends/jws {:secret secret}))
+
+(s/defschema Credentials
+  {:username s/Str
+   :password s/Str})
+
+(defn find-user [id pass]
+  (if (and (= id "yolo") (= pass "swag"))
+    {:id "yolo"}
+    {}))
+
+(defn login-handler [request]
+  (let [user (find-user (:username request)
+                        (:password request))
+        token (jwt/sign {:user (:id user)} secret)]
+    (rh/ok {:token token
+            :user (:id user)})))
 
 (defn ota-update
   "Performs OTA update for ESP8266"
@@ -28,6 +50,11 @@
    (sw/context "/api/v1" []
             :tags ["api1"]
 
+            (sw/POST "/login" []
+                     :summary "authorize and receive jwt token"
+                     :body [creds Credentials]
+                     (login-handler creds))
+
             (sw/GET "/plus" []
                  :return Long
                  :query-params [x :- Long, y :- Long]
@@ -44,4 +71,4 @@
     (route/not-found "Not Found")) 
 
 (def app
-    (wrap-defaults rest-api site-defaults))
+  (wrap-authentication (wrap-defaults rest-api api-defaults) backend))
