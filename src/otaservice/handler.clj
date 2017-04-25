@@ -1,15 +1,37 @@
 (ns otaservice.handler
-  (:require #_[compojure.core :refer :all]
-            [compojure.route :as route]
+  (:require [compojure.route :as route]
             [ring.util.response :as r]
             [ring.util.http-response :as rh]
             [clojure.java.io :as io]
             [compojure.api.sweet :as sw]
+            [compojure.api.meta :refer [restructure-param]]
             [schema.core :as s]
+            [buddy.auth.accessrules :refer [wrap-access-rules]]
             [buddy.auth.backends :as backends]
-            [buddy.auth.middleware :refer [wrap-authentication]]
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
             [buddy.sign.jwt :as jwt]
-            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]))
+            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
+            [otaservice.tools :as t])
+  (:import (java.io File)))
+
+(defn authenticated-user
+  "Check if there is any identity with request"
+  [request]
+  (t/not-nil? (:identity request)))
+
+(defn access-error
+  [req val]
+  (rh/forbidden {:reason "No access rights to this resource"}))
+
+(defn wrap-rule [handler rule]
+  (-> handler
+      (wrap-access-rules {:rules [{:pattern #".*"
+                                   :handler rule}]
+                          :on-error access-error})))
+
+(defmethod restructure-param :auth-rules
+  [_ rule acc]
+  (update-in acc [:middleware] conj [wrap-rule rule]))
 
 (def secret "lolsecretjk")
 (def backend (backends/jws {:secret secret}))
@@ -25,9 +47,9 @@
 
 (defn login-handler [request]
   (if-let [user (find-user (:username request)
-                        (:password request))]
+                           (:password request))]
     (rh/ok {:token (jwt/sign {:user (:id user)} secret)})
-    (rh/forbidden {:reason "Wrong credentials"})))
+    (rh/unauthorized {:reason "Wrong credentials"})))
 
 (defn ota-update
   "Performs OTA update for ESP8266"
@@ -41,36 +63,38 @@
 
 (def rest-api
   (sw/api
-   {:swagger {:ui "/"
+   {:swagger {:ui "/api"
               :spec "/swagger.json"
               :data {:info {:title "OTA Service"
                             :description "ESP8266 OTA Updates service"}
+                     :securityDefinitions {:api_key {:type "apiKey"
+                                                     :name "Authorization"
+                                                     :in "header"}}
                      :tags [{:name "api1" :description "first generation api"}]}}}
    (sw/context "/api/v1" []
-            :tags ["api1"]
+               :tags ["api1"]
 
-            (sw/POST "/login" []
-                     :body [creds Credentials]
-                     :responses {403 {:schema {:reason s/Str}
-                                      :description "No user with this login & pass found."}}
-                     :return {:token s/Str}
-                     :summary "authorize and receive jwt token"
-                     (login-handler creds))
+               (sw/POST "/login" []
+                        :body [creds Credentials]
+                        :responses {401 {:schema {:reason s/Str}
+                                         :description "No user with this login & pass found."}}
+                        :return {:token s/Str}
+                        :summary "authorize and receive jwt token"
+                        (login-handler creds))
 
-            (sw/GET "/plus" []
-                 :return Long
-                 :query-params [x :- Long, y :- Long]
-                 :summary "Adds two numbers together"
-                 (rh/ok (+ x y)))
-            
-            (sw/GET "/update" request
-                 :summary "Performs OTA update for ESP8266"
-                 (ota-update request)))))
-
-#_(defroutes app-routes
-    (GET "/" [] "Hello World")
-    (GET "/update" request (ota-update request))
-    (route/not-found "Not Found")) 
+               (sw/GET "/plus" []
+                       :return Long
+                       :query-params [x :- Long, y :- Long]
+                       :auth-rules authenticated-user
+                       :summary "Adds two numbers together"
+                       (rh/ok (+ x y)))
+               
+               (sw/GET "/update" request
+                       :summary "Performs OTA update for ESP8266"
+                       :return File
+                       (ota-update request)))))
 
 (def app
-  (wrap-authentication (wrap-defaults rest-api api-defaults) backend))
+  (-> rest-api
+      (wrap-authorization backend)
+      (wrap-authentication backend)))
