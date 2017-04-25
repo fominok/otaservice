@@ -8,7 +8,7 @@
                  [metosin/compojure-api "1.2.0-alpha5"]
                  [buddy/buddy-auth "1.4.1"]]
   :plugins [[lein-ring "0.9.7"]]
-  :ring {:handler otaservice.handler/app
+  :ring {:handler otaservice.core/app
          :nrepl {:start? true
                  :port 1337}}
   :profiles
