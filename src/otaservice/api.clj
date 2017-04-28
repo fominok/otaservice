@@ -12,7 +12,6 @@
   {:username s/Str
    :password s/Str})
 
-
 ;;; Api definitions
 
 (def rest-api
@@ -42,6 +41,12 @@
                        :auth-rules sec/authenticated-user
                        :summary "Adds two numbers together"
                        (rh/ok (+ x y)))
+
+               (sw/GET "/user_exists" []
+                       :return s/Bool
+                       :query-params [id :- s/Str]
+                       :summary "Check if user exists"
+                       (handlers/user-exists-handler id))
                
                (sw/GET "/update" request
                        :summary "Performs OTA update for ESP8266"

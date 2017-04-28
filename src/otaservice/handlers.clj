@@ -3,6 +3,8 @@
             [ring.util.response :as r]
             [ring.util.http-response :as rh]
             [clojure.java.io :as io]
+            [otaservice.db.queries :as q]
+            [otaservice.db :as db]
             [buddy.sign.jwt :as jwt]))
 
 (defn- find-user [id pass]
@@ -26,3 +28,9 @@
         (r/header "Content-Length" (.length bin))
         (r/status 200))))
 
+
+(defn user-exists-handler [id]
+  (->
+   (q/find-user db/database-uri {:identity id})
+   empty? not
+   rh/ok))

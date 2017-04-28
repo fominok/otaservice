@@ -1,12 +1,10 @@
 (ns deploy
   (:require [ragtime.jdbc :as jdbc]
             [ragtime.repl :as repl]
-            [environ.core :refer [env]]))
-
-(def pg-db (env :database-url))
+            [otaservice.db :as db]))
 
 (defn load-config []
-  {:datastore (jdbc/sql-database pg-db)
+  {:datastore (jdbc/sql-database db/database-uri)
    :migrations (jdbc/load-resources "migrations")})
 
 (defn migrate []
