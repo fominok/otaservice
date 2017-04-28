@@ -1,6 +1,6 @@
-(defproject otaservice "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject otaservice "0.0.1"
+  :description "Web-service to store ESP8266 firmwares and to distribute updates"
+  :url "http://github.com/fominok/otaservice"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [compojure "1.5.1"]
@@ -13,11 +13,14 @@
                  [postgresql/postgresql "9.3-1102.jdbc41"]]
   :source-paths ["src"]
   :plugins [[lein-ring "0.9.7"]]
+  :uberjar-name "otaservice-standalone.jar"
   :ring {:handler otaservice.core/app
+         :init deploy/migrate
          :nrepl {:start? true
                  :port 1337}}
   :aliases {"migrate" ["run" "-m" "deploy/migrate"]
-            "rollback" ["run" "-m" "deploy/rollback"]}
+            "rollback" ["run" "-m" "deploy/rollback"]
+            "uberjar" ["ring" "uberjar"]}
   :profiles {:dev {:resource-paths ["config/dev"]
                    :dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring/ring-mock "0.3.0"]]}

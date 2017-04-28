@@ -3,7 +3,7 @@
             [ragtime.repl :as repl]))
 
 (def pg-db {:dbtype "postgresql"
-            :dbname "otaupdate"
+            :dbname "otaservice"
             :host "localhost"})
 
 (defn load-config []
