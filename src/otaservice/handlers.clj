@@ -8,15 +8,17 @@
             [buddy.hashers :as hashers]
             [buddy.sign.jwt :as jwt]))
 
-(defn- find-user [id pass]
-  (if (and (= id "yolo") (= pass "swag"))
-    {:id "yolo"}
+(defn- find-user [{:keys [username password]}]
+  (if-let [{:keys [identity pass]} (not-empty (q/find-user
+                                               db/database-uri
+                                               {:identity username}))]
+    (when (hashers/check password pass)
+      username)
     nil))
 
 (defn login-handler [creds]
-  (if-let [user (find-user (:username creds)
-                           (:password creds))]
-    (rh/ok {:token (jwt/sign {:user (:id user)} sec/secret)})
+  (if-let [user (find-user creds)]
+    (rh/ok {:token (jwt/sign {:user user} sec/secret)})
     (rh/unauthorized {:reason "Wrong credentials"})))
 
 (defn ota-update
