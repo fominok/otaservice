@@ -1,10 +1,9 @@
 (ns deploy
   (:require [ragtime.jdbc :as jdbc]
-            [ragtime.repl :as repl]))
+            [ragtime.repl :as repl]
+            [environ.core :refer [env]]))
 
-(def pg-db {:dbtype "postgresql"
-            :dbname "otaservice"
-            :host "localhost"})
+(def pg-db (env :database-url))
 
 (defn load-config []
   {:datastore (jdbc/sql-database pg-db)
