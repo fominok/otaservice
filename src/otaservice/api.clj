@@ -12,6 +12,9 @@
   {:username s/Str
    :password s/Str})
 
+(s/defschema UsError
+  {:reason s/Str})
+
 ;;; Api definitions
 
 (def rest-api
@@ -29,11 +32,21 @@
 
                (sw/POST "/login" []
                         :body [creds Credentials]
-                        :responses {401 {:schema {:reason s/Str}
+                        :responses {401 {:schema UsError
                                          :description "No user with this login & pass found."}}
                         :return {:token s/Str}
-                        :summary "authorize and receive jwt token"
+                        :summary "Authorize and receive jws token"
                         (handlers/login-handler creds))
+
+               (sw/POST "/register" []
+                        :body [creds Credentials]
+                        :responses {409 {:schema UsError
+                                         :description "User exists already"}
+                                    400 {:schema UsError
+                                         :description "Validation failed"}}
+                        :return {:identity s/Str}
+                        :summary "Register new user"
+                        (handlers/register-user creds))
 
                (sw/GET "/plus" []
                        :return Long
@@ -47,7 +60,7 @@
                        :query-params [id :- s/Str]
                        :summary "Check if user exists"
                        (handlers/user-exists-handler id))
-               
+
                (sw/GET "/update" request
                        :summary "Performs OTA update for ESP8266"
                        :return File

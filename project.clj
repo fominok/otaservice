@@ -7,6 +7,7 @@
                  [ring/ring-defaults "0.2.1"]
                  [metosin/compojure-api "1.2.0-alpha5"]
                  [buddy/buddy-auth "1.4.1"]
+                 [buddy/buddy-hashers "1.2.0"]
                  [environ "1.1.0"]
                  [ragtime "0.7.1"]
                  [com.layerware/hugsql "0.4.7"]

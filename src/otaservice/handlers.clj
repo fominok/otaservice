@@ -5,6 +5,7 @@
             [clojure.java.io :as io]
             [otaservice.db.queries :as q]
             [otaservice.db :as db]
+            [buddy.hashers :as hashers]
             [buddy.sign.jwt :as jwt]))
 
 (defn- find-user [id pass]
@@ -12,9 +13,9 @@
     {:id "yolo"}
     nil))
 
-(defn login-handler [request]
-  (if-let [user (find-user (:username request)
-                           (:password request))]
+(defn login-handler [creds]
+  (if-let [user (find-user (:username creds)
+                           (:password creds))]
     (rh/ok {:token (jwt/sign {:user (:id user)} sec/secret)})
     (rh/unauthorized {:reason "Wrong credentials"})))
 
@@ -28,9 +29,17 @@
         (r/header "Content-Length" (.length bin))
         (r/status 200))))
 
+(defn- find-user-by-id [id]
+  (-> (q/find-user db/database-uri {:identity id})
+      empty? not))
 
 (defn user-exists-handler [id]
-  (->
-   (q/find-user db/database-uri {:identity id})
-   empty? not
-   rh/ok))
+  (rh/ok (find-user-by-id id)))
+
+(defn register-user [{:keys [username password]}]
+  (if (find-user-by-id username)
+    (rh/conflict {:reason "User already exists"})
+    (do
+      (q/create-user db/database-uri {:identity username
+                                      :pass-hashed (hashers/derive password)})
+      (rh/ok {:identity username}))))
