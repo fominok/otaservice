@@ -62,7 +62,9 @@
                        :summary "Check if user exists"
                        (handlers/user-exists-handler id))
 
-               (sw/GET "/update" request
+               (sw/GET "/:user/update" request
+                       :path-params [user :- s/Str]
+                       :header-params [user-agent :- s/Str x-esp8266-sta-mac :- s/Str]
                        :return File
-                       :summary "Performs OTA update for ESP8266"
-                       (handlers/ota-update request)))))
+                       :summary "ESP8266 endpoint to ping server for updates"
+                       (handlers/ota-update user user-agent x-esp8266-sta-mac)))))

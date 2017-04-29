@@ -24,8 +24,8 @@
 
 (defn ota-update
   "Performs OTA update for ESP8266"
-  [request]
-  (clojure.pprint/pprint request)
+  [user user-agent mac]
+  (println user user-agent mac)
   (rh/not-modified)
   #_(let [bin (io/file "resources/public/webserver.bin")]
     (-> (r/response (io/input-stream bin))
