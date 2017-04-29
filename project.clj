@@ -11,8 +11,9 @@
                  [environ "1.1.0"]
                  [ragtime "0.7.1"]
                  [com.layerware/hugsql "0.4.7"]
+                 [bouncer "1.0.1"]
                  [postgresql/postgresql "9.3-1102.jdbc41"]]
-  :source-paths ["src"]
+  :source-paths ["src/cljc" "src/clj"]
   :plugins [[lein-ring "0.9.7"]]
   :uberjar-name "otaservice-standalone.jar"
   :ring {:handler otaservice.core/app

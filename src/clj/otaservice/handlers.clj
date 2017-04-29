@@ -1,5 +1,6 @@
 (ns otaservice.handlers
   (:require [otaservice.security :as sec]
+            [otaservice.validators :as v]
             [ring.util.response :as r]
             [ring.util.http-response :as rh]
             [clojure.java.io :as io]
@@ -38,10 +39,13 @@
 (defn user-exists-handler [id]
   (rh/ok (find-user-by-id id)))
 
-(defn register-user [{:keys [username password]}]
-  (if (find-user-by-id username)
-    (rh/conflict {:reason "User already exists"})
-    (do
-      (q/create-user db/database-uri {:identity username
-                                      :pass-hashed (hashers/derive password)})
-      (rh/ok {:identity username}))))
+(defn register-user [{:keys [username password] :as creds}]
+  (if-let [validation-errors (first (v/check-creds-input creds))]
+    (rh/bad-request {:errors validation-errors})
+
+    (if (find-user-by-id username)
+      (rh/conflict {:reason "User already exists"})
+      (do
+        (q/create-user db/database-uri {:identity username
+                                        :pass-hashed (hashers/derive password)})
+        (rh/ok {:identity username})))))

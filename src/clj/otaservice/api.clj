@@ -42,7 +42,8 @@
                         :body [creds Credentials]
                         :responses {409 {:schema UsError
                                          :description "User exists already"}
-                                    400 {:schema UsError
+                                    400 {:schema {:errors {(s/optional-key :username) [s/Str]
+                                                           (s/optional-key :password) [s/Str]}}
                                          :description "Validation failed"}}
                         :return {:identity s/Str}
                         :summary "Register new user"
