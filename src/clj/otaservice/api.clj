@@ -63,6 +63,6 @@
                        (handlers/user-exists-handler id))
 
                (sw/GET "/update" request
-                       :summary "Performs OTA update for ESP8266"
                        :return File
+                       :summary "Performs OTA update for ESP8266"
                        (handlers/ota-update request)))))

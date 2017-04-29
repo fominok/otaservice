@@ -25,7 +25,9 @@
 (defn ota-update
   "Performs OTA update for ESP8266"
   [request]
-  (let [bin (io/file "resources/public/webserver.bin")]
+  (clojure.pprint/pprint request)
+  (rh/not-modified)
+  #_(let [bin (io/file "resources/public/webserver.bin")]
     (-> (r/response (io/input-stream bin))
         (r/header "Content-Type" "application/octet-stream")
         (r/header "Content-Disposition" "attachment")
