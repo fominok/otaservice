@@ -20,7 +20,7 @@
 (defn login-handler [creds]
   (if-let [user (find-user creds)]
     (rh/ok {:token (jwt/sign {:user user} sec/secret)})
-    (rh/unauthorized {:reason "Wrong credentials"})))
+    (rh/unauthorized {:error "Wrong credentials"})))
 
 (defn ota-update
   "Performs OTA update for ESP8266"
@@ -44,7 +44,7 @@
     (rh/bad-request {:errors validation-errors})
 
     (if (find-user-by-id username)
-      (rh/conflict {:reason "User already exists"})
+      (rh/conflict {:error "User already exists"})
       (do
         (q/create-user db/database-uri {:identity username
                                         :pass-hashed (hashers/derive password)})

@@ -16,7 +16,7 @@
 
 (defn access-error
   [req val]
-  (rh/forbidden {:reason "No access rights to this resource"}))
+  (rh/forbidden {:error "No access rights to this resource"}))
 
 (defn wrap-rule [handler rule]
   (-> handler

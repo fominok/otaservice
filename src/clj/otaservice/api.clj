@@ -13,7 +13,7 @@
    :password s/Str})
 
 (s/defschema UsError
-  {:reason s/Str})
+  {:error s/Str})
 
 ;;; Api definitions
 
@@ -42,7 +42,7 @@
                         :body [creds Credentials]
                         :responses {409 {:schema UsError
                                          :description "User exists already"}
-                                    400 {:schema {:errors {(s/optional-key :username) [s/Str]
+                                    400 {:schema {:error {(s/optional-key :username) [s/Str]
                                                            (s/optional-key :password) [s/Str]}}
                                          :description "Validation failed"}}
                         :return {:identity s/Str}
