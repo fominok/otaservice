@@ -1,2 +1,2 @@
-{:up ["CREATE TABLE users (identity char(30) CONSTRAINT firstkey PRIMARY KEY, pass varchar(100) NOT NULL);"]
+{:up ["CREATE TABLE users (identity char(30) PRIMARY KEY, pass varchar(100) NOT NULL);"]
  :down ["DROP TABLE users;"]}

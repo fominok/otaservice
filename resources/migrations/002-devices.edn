@@ -1,0 +1,9 @@
+{:up ["CREATE TABLE devices (mac char(12) PRIMARY KEY,
+                             developer char(30) REFERENCES users,
+                             visual_name varchar(30),
+                             visual_icon varchar(10),
+                             last_active timestamp with time zone,
+                             device_version varchar(30),
+                             service_version varchar(30)
+                             );"]
+ :down ["DROP TABLE devices;"]}

@@ -64,6 +64,8 @@
 
                (sw/GET "/:user/update" request
                        :path-params [user :- s/Str]
+                       :responses {304 {:description "No updates"}
+                                   422 {:schema s/Str :description "Wrong user-agent"}}
                        :header-params [user-agent :- s/Str x-esp8266-sta-mac :- s/Str]
                        :return File
                        :summary "ESP8266 endpoint to ping server for updates"

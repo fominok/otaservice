@@ -25,8 +25,11 @@
 (defn ota-update
   "Performs OTA update for ESP8266"
   [user user-agent mac]
-  (println user user-agent mac)
-  (rh/not-modified)
+  (if (not= user-agent "ESP8266-http-Update")
+    (rh/unprocessable-entity "ESP8266 only!")
+    (do
+      (println user user-agent mac)
+      (rh/not-modified)))
   #_(let [bin (io/file "resources/public/webserver.bin")]
     (-> (r/response (io/input-stream bin))
         (r/header "Content-Type" "application/octet-stream")
