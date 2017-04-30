@@ -22,13 +22,12 @@
     (rh/ok {:token (jwt/sign {:user user} sec/secret)})
     (rh/unauthorized {:error "Wrong credentials"})))
 
-(defn ota-update
-  "Performs OTA update for ESP8266"
-  [user user-agent mac]
+(defn esp-ping
+  [user user-agent mac version]
   (if (not= user-agent "ESP8266-http-Update")
     (rh/unprocessable-entity "ESP8266 only!")
     (do
-      (println user user-agent mac)
+      (println user user-agent mac version)
       (rh/not-modified)))
   #_(let [bin (io/file "resources/public/webserver.bin")]
     (-> (r/response (io/input-stream bin))

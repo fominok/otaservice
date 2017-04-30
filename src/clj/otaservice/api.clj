@@ -62,11 +62,12 @@
                        :summary "Check if user exists"
                        (handlers/user-exists-handler id))
 
-               (sw/GET "/:user/update" request
+               (sw/GET "/:user/ping" request
                        :path-params [user :- s/Str]
+                       :query-params [version :- s/Str]
                        :responses {304 {:description "No updates"}
                                    422 {:schema s/Str :description "Wrong user-agent"}}
                        :header-params [user-agent :- s/Str x-esp8266-sta-mac :- s/Str]
                        :return File
                        :summary "ESP8266 endpoint to ping server for updates"
-                       (handlers/ota-update user user-agent x-esp8266-sta-mac)))))
+                       (handlers/esp-ping user user-agent x-esp8266-sta-mac version)))))
