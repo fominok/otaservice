@@ -28,13 +28,12 @@
   (if (not= user-agent "ESP8266-http-Update")
     (rh/unprocessable-entity "ESP8266 only!")
     (do
-      (println user user-agent mac version)
       (try
         (q/device-ping! db/database-uri {:mac (clojure.string/replace mac #":" "")
                                          :developer user
                                          :last-active (t/now)
                                          :device-version version})
-        (catch java.sql.BatchUpdateException e nil)) ;; TODO: log
+        (catch java.sql.BatchUpdateException e 0)) ;; TODO: log
       (rh/not-modified)))
   #_(let [bin (io/file "resources/public/webserver.bin")]
     (-> (r/response (io/input-stream bin))

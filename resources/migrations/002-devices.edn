@@ -1,5 +1,5 @@
 {:up ["CREATE TABLE devices (mac char(12) PRIMARY KEY,
-                             developer char(30) REFERENCES users,
+                             developer char(30) REFERENCES users ON DELETE CASCADE,
                              visual_name varchar(30),
                              visual_icon varchar(10),
                              last_active timestamp with time zone,
