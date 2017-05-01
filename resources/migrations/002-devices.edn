@@ -2,8 +2,8 @@
                              developer char(30) REFERENCES users ON DELETE CASCADE,
                              visual_name varchar(30),
                              visual_icon varchar(10),
-                             last_active timestamp with time zone,
-                             device_version varchar(30),
+                             last_active timestamp with time zone NOT NULL,
+                             device_version varchar(30) NOT NULL,
                              service_version varchar(30)
                              );"]
  :down ["DROP TABLE devices;"]}
