@@ -14,3 +14,8 @@ developer = :developer,
 last_active = :last-active,
 device_version = :device-version
 
+-- :name device-info :? :1
+select * from devices where mac = :mac
+
+-- :name devices-by-user :? :*
+select * from devices where developer = :user
