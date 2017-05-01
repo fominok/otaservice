@@ -1,6 +1,7 @@
 (ns otaservice.handlers
   (:require [otaservice.security :as sec]
             [otaservice.validators :as v]
+            [otaservice.tools :as t]
             [ring.util.response :as r]
             [ring.util.http-response :as rh]
             [clojure.java.io :as io]
@@ -28,6 +29,12 @@
     (rh/unprocessable-entity "ESP8266 only!")
     (do
       (println user user-agent mac version)
+      (try
+        (q/device-ping! db/database-uri {:mac (clojure.string/replace mac #":" "")
+                                         :developer user
+                                         :last-active (t/now)
+                                         :device-version version})
+        (catch java.sql.BatchUpdateException e nil)) ;; TODO: log
       (rh/not-modified)))
   #_(let [bin (io/file "resources/public/webserver.bin")]
     (-> (r/response (io/input-stream bin))
@@ -45,11 +52,11 @@
 
 (defn register-user [{:keys [username password] :as creds}]
   (if-let [validation-errors (first (v/check-creds-input creds))]
-    (rh/bad-request {:errors validation-errors})
+    (rh/bad-request {:error validation-errors})
 
     (if (find-user-by-id username)
       (rh/conflict {:error "User already exists"})
       (do
-        (q/create-user db/database-uri {:identity username
+        (q/create-user! db/database-uri {:identity username
                                         :pass-hashed (hashers/derive password)})
         (rh/ok {:identity username})))))
