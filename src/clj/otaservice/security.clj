@@ -1,9 +1,10 @@
 (ns otaservice.security
   (:require [otaservice.tools :as t]
-           [ring.util.http-response :as rh]
-           [compojure.api.meta :refer [restructure-param]]
-           [buddy.auth.accessrules :refer [wrap-access-rules]]
-           [buddy.auth.backends :as backends]))
+            [environ.core :refer [env]]
+            [ring.util.http-response :as rh]
+            [compojure.api.meta :refer [restructure-param]]
+            [buddy.auth.accessrules :refer [wrap-access-rules]]
+            [buddy.auth.backends :as backends]))
 
 ;;; Access rules
 
@@ -35,6 +36,6 @@
 
 ;;; JWS Token backend
 
-(def secret "lolsecretjk")
+(def secret (env :secret))
 
 (def backend (backends/jws {:secret secret}))

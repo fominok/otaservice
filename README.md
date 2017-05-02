@@ -13,6 +13,31 @@ You will need [Leiningen][] 2.0.0 or above installed.
 
 To start a web server for the application, run:
 
-    lein ring server-headless
-	
-Uberjar, deploying and environment variables will be documented later.
+	lein ring server-headless
+
+Also you can build `jar` archive with:
+
+	lein uberjar
+
+Then launch it with
+
+	java -jar target/otaservice-standalone.jar
+
+## Environment variables
+
+- DATABASE_URL : pretty self-explanatory (migrations use PostgreSQL syntax)
+- SECRET : required for Signed JWT token (changing it will invalidate all Auth tokens)
+
+## Example
+
+	DATABASE_URL=jdbc:postgresql://localhost/otaservice \
+	SECRET=soprivate \
+	lein ring server-headless
+
+At `localhost:3000/api` there is Swagger-UI with all API methods.
+
+
+## TODO
+- UI
+- Manage DB connection lifecycle
+- forgot the last one
