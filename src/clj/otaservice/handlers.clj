@@ -35,7 +35,11 @@
     (catch java.sql.BatchUpdateException e nil)))  ;; TODO: log
 
 (defn- update-response [device] ;; not implemented yet
-  (let [bin (io/file "resources/public/webserver.bin")]
+  (let [mac (:mac device)
+        user (clojure.string/trim (:developer device))
+        version (:service_version device)
+        filename (str "resources/" user "/" mac "_" version)
+        bin (io/file filename)]
     (-> (r/response (io/input-stream bin))
         (r/header "Content-Type" "application/octet-stream")
         (r/header "Content-Disposition" "attachment")
@@ -70,9 +74,14 @@
                                          :pass-hashed (hashers/derive password)})
         (rh/ok {:identity username})))))
 
-(defn file-thing [multipart]
-  (io/copy (:tempfile multipart) (io/file (str "resources/" (:filename multipart))))
-  (rh/ok "lol"))
+(defn upload-firmware [user mac firmware version]
+  (let [filename (str "resources/" user "/" mac "_" version)]
+    (io/make-parents filename)
+    (io/copy (:tempfile firmware) (io/file filename))
+    (q/update-device! db/database-uri (-> {:service_version version}
+                                          db/restruct
+                                          (assoc :mac mac)))
+    (rh/ok version)))
 
 (defn get-devices [user]
   (rh/ok (map

@@ -19,3 +19,6 @@ select * from devices where mac = :mac
 
 -- :name devices-by-user :? :*
 select * from devices where developer = :user
+
+-- :name update-device! :! :n
+update devices set (:i*:keys) = (:v*:values) where mac = :mac

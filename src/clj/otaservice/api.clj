@@ -40,6 +40,8 @@
    (sw/context "/api/v1" []
                :tags ["api1"]
 
+               ;; Authentication things
+
                (sw/POST "/login" []
                         :body [creds Credentials]
                         :responses {401 {:schema UsError
@@ -59,18 +61,7 @@
                         :summary "Register new user"
                         (handlers/register-user creds))
 
-               #_(sw/GET "/plus" []
-                       :return Long
-                       :query-params [x :- Long, y :- Long]
-                       :auth-rules sec/authenticated-user
-                       :summary "Adds two numbers together"
-                       (rh/ok (+ x y)))
-
-               #_(sw/GET "/user_exists" []
-                       :return s/Bool
-                       :query-params [id :- s/Str]
-                       :summary "Check if user exists"
-                       (handlers/user-exists-handler id))
+               ;; Developer's private zone
 
                (sw/GET "/:user/devices" []
                        :return [Device]
@@ -86,12 +77,13 @@
                        :summary "Get device info by mac"
                        (handlers/get-one-device mac))
 
-
-               #_(sw/POST "/:user/" []
-                          :summary "ring-based file upload"
-                          :multipart-params [foo :- up/TempFileUpload]
-                          :middleware [up/wrap-multipart-params]
-                          (handlers/file-thing foo))
+               (sw/POST "/:user/devices/:mac/upload" []
+                        :path-params [user :- s/Str mac :- s/Str]
+                        :multipart-params [firmware :- up/TempFileUpload version :- s/Str]
+                        :middleware [up/wrap-multipart-params]
+                        :auth-rules sec/owner-only
+                        :summary "Upload new firmware for device"
+                        (handlers/upload-firmware user mac firmware version))
 
                ;; ESP8266 api endpoint
                (sw/GET "/:user/ping" request
