@@ -8,7 +8,8 @@
             [otaservice.db.queries :as q]
             [otaservice.db :as db]
             [buddy.hashers :as hashers]
-            [buddy.sign.jwt :as jwt]))
+            [buddy.sign.jwt :as jwt]
+            [clojure.java.io :as io]))
 
 (defn- find-user [{:keys [username password]}]
   (if-let [{:keys [identity pass]} (not-empty (q/find-user
@@ -66,5 +67,20 @@
       (rh/conflict {:error "User already exists"})
       (do
         (q/create-user! db/database-uri {:identity username
-                                        :pass-hashed (hashers/derive password)})
+                                         :pass-hashed (hashers/derive password)})
         (rh/ok {:identity username})))))
+
+(defn file-thing [multipart]
+  (io/copy (:tempfile multipart) (io/file (str "resources/" (:filename multipart))))
+  (rh/ok "lol"))
+
+(defn get-devices [user]
+  (rh/ok (map
+          (comp #(update % :developer clojure.string/trim) t/filter-nil-map)
+          (q/devices-by-user db/database-uri {:user user}))))
+
+(defn get-one-device [mac]
+  (-> (q/device-info db/database-uri {:mac mac})
+      (update :developer clojure.string/trim)
+      t/filter-nil-map
+      rh/ok))

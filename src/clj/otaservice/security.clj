@@ -12,6 +12,11 @@
   [request]
   (t/not-nil? (:identity request)))
 
+(defn owner-only [request]
+  (let [target-user (get-in request [:params :user])
+        real-user (get-in request [:identity :user])]
+    (= target-user real-user)))
+
 ;;; Rules Compojure-api mod
 
 (defn access-error

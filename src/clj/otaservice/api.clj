@@ -2,6 +2,7 @@
   (:require [otaservice.security :as sec]
             [otaservice.handlers :as handlers]
             [compojure.api.sweet :as sw]
+            [compojure.api.upload :as up]
             [ring.util.http-response :as rh]
             [schema.core :as s])
   (:import java.io.File))
@@ -14,6 +15,15 @@
 
 (s/defschema UsError
   {:error s/Str})
+
+(s/defschema Device
+  {:mac s/Str
+   :developer s/Str
+   (s/optional-key :visual_name) s/Str
+   (s/optional-key :visual_icon) s/Str
+   :last_active java.sql.Timestamp
+   :device_version s/Str
+   (s/optional-key :service_version) s/Str})
 
 ;;; Api definitions
 
@@ -43,25 +53,47 @@
                         :responses {409 {:schema UsError
                                          :description "User exists already"}
                                     400 {:schema {:error {(s/optional-key :username) [s/Str]
-                                                           (s/optional-key :password) [s/Str]}}
+                                                          (s/optional-key :password) [s/Str]}}
                                          :description "Validation failed"}}
                         :return {:identity s/Str}
                         :summary "Register new user"
                         (handlers/register-user creds))
 
-               (sw/GET "/plus" []
+               #_(sw/GET "/plus" []
                        :return Long
                        :query-params [x :- Long, y :- Long]
                        :auth-rules sec/authenticated-user
                        :summary "Adds two numbers together"
                        (rh/ok (+ x y)))
 
-               (sw/GET "/user_exists" []
+               #_(sw/GET "/user_exists" []
                        :return s/Bool
                        :query-params [id :- s/Str]
                        :summary "Check if user exists"
                        (handlers/user-exists-handler id))
 
+               (sw/GET "/:user/devices" []
+                       :return [Device]
+                       :path-params [user :- s/Str]
+                       :auth-rules sec/owner-only
+                       :summary "Get devices list for user"
+                       (handlers/get-devices user))
+
+               (sw/GET "/:user/devices/:mac" []
+                       :return Device
+                       :path-params [user :- s/Str mac :- s/Str]
+                       :auth-rules sec/owner-only
+                       :summary "Get device info by mac"
+                       (handlers/get-one-device mac))
+
+
+               #_(sw/POST "/:user/" []
+                          :summary "ring-based file upload"
+                          :multipart-params [foo :- up/TempFileUpload]
+                          :middleware [up/wrap-multipart-params]
+                          (handlers/file-thing foo))
+
+               ;; ESP8266 api endpoint
                (sw/GET "/:user/ping" request
                        :path-params [user :- s/Str]
                        :query-params [version :- s/Str]
