@@ -25,6 +25,10 @@
    :device_version s/Str
    (s/optional-key :service_version) s/Str})
 
+(s/defschema DeviceCrop
+  {(s/optional-key :visual_name) s/Str
+   (s/optional-key :visual_icon) s/Str})
+
 ;;; Api definitions
 
 (def rest-api
@@ -76,6 +80,13 @@
                        :auth-rules sec/owner-only
                        :summary "Get device info by mac"
                        (handlers/get-one-device mac))
+
+               (sw/POST "/:user/devices/:mac" []
+                        :return Device
+                        :path-params [user :- s/Str mac :- s/Str]
+                        :auth-rules sec/owner-only
+                        :body [body DeviceCrop]
+                        (handlers/update-device-info user mac body))
 
                (sw/POST "/:user/devices/:mac/upload" []
                         :path-params [user :- s/Str mac :- s/Str]

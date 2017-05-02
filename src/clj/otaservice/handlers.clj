@@ -34,7 +34,7 @@
     (q/device-info db/database-uri {:mac mac})
     (catch java.sql.BatchUpdateException e nil)))  ;; TODO: log
 
-(defn- update-response [device] ;; not implemented yet
+(defn- update-response [device]
   (let [mac (:mac device)
         user (clojure.string/trim (:developer device))
         version (:service_version device)
@@ -93,3 +93,9 @@
       (update :developer clojure.string/trim)
       t/filter-nil-map
       rh/ok))
+
+(defn update-device-info [user mac body]
+  (q/update-device! db/database-uri (-> body
+                                        db/restruct
+                                        (assoc :mac mac)))
+  (get-one-device mac))
