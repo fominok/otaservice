@@ -12,9 +12,12 @@
                  [ragtime "0.7.1"]
                  [com.layerware/hugsql "0.4.7"]
                  [bouncer "1.0.1"]
+                 [midje "1.8.3"]
                  [postgresql/postgresql "9.3-1102.jdbc41"]]
   :source-paths ["src/cljc" "src/clj"]
-  :plugins [[lein-ring "0.9.7"]]
+  :plugins [[lein-ring "0.9.7"]
+            [lein-environ "1.1.0"]
+            [lein-midje "3.2.1"]]
   :uberjar-name "otaservice-standalone.jar"
   :ring {:handler otaservice.core/app
          :init deploy/migrate
@@ -25,5 +28,8 @@
             "uberjar" ["ring" "uberjar"]}
   :profiles {:dev {:resource-paths ["config/dev"]
                    :dependencies [[javax.servlet/servlet-api "2.5"]
-                                  [ring/ring-mock "0.3.0"]]}
+                                  [ring/ring-mock "0.3.0"]
+                                  [cheshire "5.7.1"]]}
+             :midje {:env {:database-url "jdbc:postgresql://localhost/otatest"
+                           :secret "supersecret"}}
              :uberjar {:aot :all}})

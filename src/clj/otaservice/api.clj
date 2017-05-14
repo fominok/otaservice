@@ -86,6 +86,7 @@
                         :path-params [user :- s/Str mac :- s/Str]
                         :auth-rules sec/owner-only
                         :body [body DeviceCrop]
+                        :summary "Update device info by mac"
                         (handlers/update-device-info user mac body))
 
                (sw/POST "/:user/devices/:mac/upload" []

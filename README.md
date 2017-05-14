@@ -40,4 +40,5 @@ At `localhost:3000/api` there is Swagger-UI with all API methods.
 ## TODO
 - UI
 - Manage DB connection lifecycle
+- tests??
 - forgot the last one
