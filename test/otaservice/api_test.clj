@@ -70,3 +70,22 @@
                        body (parse-body (:body response))]
                    (:status response) => 200
                    (jwt/unsign (:token body) (env :secret)) => {:user (:username creds)})))))
+
+
+(let [creds {:username "user" :password "password"}
+      non-user {:username "nobody" :password "password"}
+      version "4.20"
+      mac "F9:EC:6C:C0:29:25"]
+  (with-state-changes [(before :contents (do (migrate)
+                                             (register-req creds)))
+                       (after :contents (rollback-all))]
+    (let [ping-req #(rest-api (-> (mock/request :get (str "/api/v1/" (:username %) "/ping"))
+                                 (mock/header "user-agent" "ESP8266-http-Update")
+                                 (mock/header "x-esp8266-sta-mac" mac)
+                                 (mock/query-string {:version version})))
+          nouser-ping-resp (ping-req non-user)
+          exst-ping-resp (ping-req creds)]
+      (facts "about device management"
+             (fact "no user equals no firmware returning 304"
+                   (:status nouser-ping-resp) => 304
+                   (:status exst-ping-resp) => 304)))))
