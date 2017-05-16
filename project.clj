@@ -1,9 +1,12 @@
-(defproject otaservice "0.0.1"
+(defproject otaservice "0.4.20"
   :description "Web-service to store ESP8266 firmwares and to distribute updates"
   :url "http://github.com/fominok/otaservice"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.9.542" :exclusions [org.apache.ant/ant]]
                  [compojure "1.5.1"]
+                 [re-frame "0.9.3"]
+                 [reagent "0.6.1"]
                  [ring/ring-defaults "0.2.1"]
                  [metosin/compojure-api "1.2.0-alpha5"]
                  [buddy/buddy-auth "1.4.1"]
@@ -17,7 +20,18 @@
   :source-paths ["src/cljc" "src/clj"]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.1.0"]
+            [lein-cljsbuild "1.1.6"]
+            ;; [lein-figwheel "0.5.10"]
             [lein-midje "3.2.1"]]
+
+  ;;TODO add mount + figwheel
+  :cljsbuild {:builds [{:source-paths ["src/cljs"]
+                        :compiler {:main "otaservice.core"
+                                   :output-to "resources/public/js/compiled/app.js"
+                                   :output-dir "resources/public/js/compiled/out"
+                                   :asset-path "js/compiled/out"
+                                   :pretty-print true}}]}
+  :hooks [leiningen.cljsbuild]
   :uberjar-name "otaservice-standalone.jar"
   :ring {:handler otaservice.core/app
          :init deploy/migrate
