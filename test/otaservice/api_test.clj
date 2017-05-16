@@ -5,20 +5,20 @@
             [deploy :refer :all]
             [buddy.sign.jwt :as jwt]
             [environ.core :refer [env]]
-            [otaservice.api :refer [rest-api]]))
+            [otaservice.core :refer [app]]))
 
 (defn parse-body [body]
   (cheshire/parse-string (slurp body) true))
 
 (defn register-req [query]
-  (rest-api (-> (mock/request :post "/api/v1/register")
-                (mock/content-type "application/json")
-                (mock/body (cheshire/generate-string query)))))
+  (app (-> (mock/request :post "/api/v1/register")
+           (mock/content-type "application/json")
+           (mock/body (cheshire/generate-string query)))))
 
 (defn login-req [query]
-  (rest-api (-> (mock/request :post "/api/v1/login")
-                (mock/content-type "application/json")
-                (mock/body (cheshire/generate-string query)))))
+  (app (-> (mock/request :post "/api/v1/login")
+           (mock/content-type "application/json")
+           (mock/body (cheshire/generate-string query)))))
 
 (with-state-changes [(before :facts (migrate))
                      (after :facts (rollback-all))]
@@ -73,19 +73,43 @@
 
 
 (let [creds {:username "user" :password "password"}
+      other-creds {:username "otheruser" :password "anypassword"}
       non-user {:username "nobody" :password "password"}
       version "4.20"
       mac "F9:EC:6C:C0:29:25"]
   (with-state-changes [(before :contents (do (migrate)
-                                             (register-req creds)))
+                                             (register-req creds)
+                                             (register-req other-creds)))
                        (after :contents (rollback-all))]
-    (let [ping-req #(rest-api (-> (mock/request :get (str "/api/v1/" (:username %) "/ping"))
-                                 (mock/header "user-agent" "ESP8266-http-Update")
-                                 (mock/header "x-esp8266-sta-mac" mac)
-                                 (mock/query-string {:version version})))
+    (let [ping-req #(app (-> (mock/request :get (str "/api/v1/" (:username %) "/ping"))
+                             (mock/header "user-agent" "ESP8266-http-Update")
+                             (mock/header "x-esp8266-sta-mac" mac)
+                             (mock/query-string {:version version})))
           nouser-ping-resp (ping-req non-user)
-          exst-ping-resp (ping-req creds)]
+          exst-ping-resp (ping-req creds)
+          token (-> (login-req creds)
+                    :body parse-body :token)
+          other-token (-> (login-req other-creds)
+                          :body parse-body :token)
+          auth-header #(mock/header % "Authorization" (str "Token " token))
+          other-auth-header #(mock/header % "Authorization" (str "Token " other-token))]
+
       (facts "about device management"
-             (fact "no user equals no firmware returning 304"
+
+             (fact "no user equals no firmware for existing user and returning 304"
                    (:status nouser-ping-resp) => 304
-                   (:status exst-ping-resp) => 304)))))
+                   (:status exst-ping-resp) => 304)
+
+             (fact "device management requires authentication"
+                   (let [resp (app (-> (mock/request :get
+                                                     (str "/api/v1/" (:username creds) "/devices"))))
+                         body (parse-body (:body resp))]
+                     (:status resp) => 403
+                     (:error body) => "No access rights to this resource"))
+             (fact "user can access his devices only"
+                   (let [resp-correct (app (-> (mock/request :get (str "/api/v1/" (:username creds) "/devices"))
+                                               auth-header))
+                         resp-wrong (app (-> (mock/request :get (str "/api/v1/" (:username creds) "/devices"))
+                                               other-auth-header))] ;; note token for other user
+                     (:status resp-correct) => 200
+                     (:status resp-wrong) => 403))))))
