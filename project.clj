@@ -26,11 +26,17 @@
             [lein-midje "3.2.1"]]
 
   ;;TODO add mount + figwheel
-  :cljsbuild {:builds [{:source-paths ["src/cljs"]
+  :cljsbuild {:builds [{:source-paths ["src/cljs/otaservice/app"]
                         :compiler {:main "otaservice.app.core"
                                    :output-to "resources/public/js/compiled/app.js"
-                                   :output-dir "resources/public/js/compiled/out"
-                                   :asset-path "js/compiled/out"
+                                   :output-dir "resources/public/js/compiled/out/app"
+                                   :asset-path "js/compiled/out/app"
+                                   :pretty-print true}}
+                       {:source-paths ["src/cljs/otaservice/login"]
+                        :compiler {:main "otaservice.login.core"
+                                   :output-to "resources/public/js/compiled/login.js"
+                                   :output-dir "resources/public/js/compiled/out/login"
+                                   :asset-path "js/compiled/out/login"
                                    :pretty-print true}}]}
   :hooks [leiningen.cljsbuild]
   :uberjar-name "otaservice-standalone.jar"
