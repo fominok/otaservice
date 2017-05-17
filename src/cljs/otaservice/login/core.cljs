@@ -1,4 +1,4 @@
-(ns otaservice.core
+(ns otaservice.login.core
   (:require [reagent.core :as reagent]
             [re-frame.core :as rf]))
 
@@ -83,6 +83,7 @@
 
 (defn ^:export init
   []
+  (js/console.log "WAT")
   (rf/dispatch-sync [:initialize])     ;; puts a value into application state
   (reagent/render [ui]              ;; mount the application's ui into '<div id="app" />'
                   (js/document.getElementById "app")))

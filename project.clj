@@ -7,6 +7,7 @@
                  [compojure "1.5.1"]
                  [re-frame "0.9.3"]
                  [reagent "0.6.1"]
+                 [cljs-http "0.1.43"]
                  [ring/ring-defaults "0.2.1"]
                  [metosin/compojure-api "1.2.0-alpha5"]
                  [buddy/buddy-auth "1.4.1"]
@@ -26,7 +27,7 @@
 
   ;;TODO add mount + figwheel
   :cljsbuild {:builds [{:source-paths ["src/cljs"]
-                        :compiler {:main "otaservice.core"
+                        :compiler {:main "otaservice.app.core"
                                    :output-to "resources/public/js/compiled/app.js"
                                    :output-dir "resources/public/js/compiled/out"
                                    :asset-path "js/compiled/out"

@@ -8,6 +8,7 @@
 
 (defroutes non-api
   (GET "/" [] (resource-response "index.html" {:root "public"}))
+  (GET "/login" [] (resource-response "login.html" {:root "public"}))
   (resources "/"))
 
 (def app
