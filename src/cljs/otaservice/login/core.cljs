@@ -1,89 +1,89 @@
 (ns otaservice.login.core
   (:require [reagent.core :as reagent]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [ajax.core :as ajax]
+            [day8.re-frame.http-fx]))
 
-;; A detailed walk-through of this source code is provied in the docs:
-;; https://github.com/Day8/re-frame/blob/master/docs/CodeWalkthrough.md
+(rf/reg-cofx
+ :local-store
+ (fn [coeffects local-store-key]
+   (assoc coeffects
+          :local-store
+          (js->clj (.getItem js/localStorage local-store-key)))))
 
-;; -- Domino 1 - Event Dispatch -----------------------------------------------
+(rf/reg-event-fx
+ ::login-handler
+ (fn [_ [_ username password]]
+   {:http-xhrio {:method :post
+                 :uri  "/api/v1/login"
+                 :timeout 8000
+                 :params {:username username
+                          :password password}
+                 :format (ajax/json-request-format)
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success [::login-succeed]
+                 :on-failure [::login-failed]}}))
 
-(defn dispatch-timer-event
-  []
-  (let [now (js/Date.)]
-    (rf/dispatch [:timer now])))  ;; <-- dispatch used
+(rf/reg-fx
+ ::set-local-storage
+ (fn [[key val]]
+   (.setItem js/localStorage (clj->js key) val)))
 
-;; Call the dispatching function every second.
-;; `defonce` is like `def` but it ensures only instance is ever
-;; created in the face of figwheel hot-reloading of this file.
-(defonce do-timer (js/setInterval dispatch-timer-event 1000))
+(rf/reg-fx
+ :print
+ (fn [resp]
+   (js/alert resp)))
 
+(rf/reg-event-db
+ ::logged-in
+ (fn
+   [db _]
+   (assoc db :logged-in true)))
 
-;; -- Domino 2 - Event Handlers -----------------------------------------------
+(rf/reg-event-fx
+ ::login-succeed
+ (fn [cofx [_ resp]]
+   (let [val (:token resp)
+         db (:db cofx)])
+   {::set-local-storage [:token val]
+    :dispatch [::logged-in]}))
 
-(rf/reg-event-db              ;; sets up initial application state
-  :initialize                 ;; usage:  (dispatch [:initialize])
-  (fn [_ _]                   ;; the two parameters are not important here, so use _
-    {:time (js/Date.)         ;; What it returns becomes the new application state
-     :time-color "#f88"}))    ;; so the application state will initially be a map with two keys
-
-
-(rf/reg-event-db                ;; usage:  (dispatch [:time-color-change 34562])
-  :time-color-change            ;; dispatched when the user enters a new colour into the UI text field
-  (fn [db [_ new-color-value]]  ;; -db event handlers given 2 parameters:  current application state and event (a vector)
-    (assoc db :time-color new-color-value)))   ;; compute and return the new application state
-
-
-(rf/reg-event-db                 ;; usage:  (dispatch [:timer a-js-Date])
-  :timer                         ;; every second an event of this kind will be dispatched
-  (fn [db [_ new-time]]          ;; note how the 2nd parameter is destructured to obtain the data value
-    (assoc db :time new-time)))  ;; compute and return the new application state
-
-
-;; -- Domino 4 - Query  -------------------------------------------------------
+(rf/reg-event-fx
+ ::login-failed
+ (fn [_ [_ resp]]
+   {:print resp}))
 
 (rf/reg-sub
-  :time
-  (fn [db _]     ;; db is current app state. 2nd unused param is query vector
-    (-> db
-        :time)))
+ ::is-logged-in
+ (fn [db _]
+   (-> db
+       :logged-in)))
 
-(rf/reg-sub
-  :time-color
-  (fn [db _]
-    (:time-color db)))
+(defn login-form []
+  (let [username (reagent/atom "")
+        password (reagent/atom "")]
+    (fn []
+      [:div.login-form
+       [:input {:placeholder "username", :type "text" :value @username :on-change #(reset! username (-> % .-target .-value))}]
+       [:input {:placeholder "password", :type "password" :value @password :on-change #(reset! password (-> % .-target .-value))}]
+       [:div.button {:on-click #(rf/dispatch [::login-handler @username @password])} "login"]])))
 
-
-;; -- Domino 5 - View Functions ----------------------------------------------
-
-(defn clock
+(defn login-page
   []
-  [:div.example-clock
-   {:style {:color @(rf/subscribe [:time-color])}}
-   (-> @(rf/subscribe [:time])
-       .toTimeString
-       (clojure.string/split " ")
-       first)])
-
-(defn color-input
-  []
-  [:div.color-input
-   "Time color: "
-   [:input {:type "text"
-            :value @(rf/subscribe [:time-color])
-            :on-change #(rf/dispatch [:time-color-change (-> % .-target .-value)])}]])  ;; <---
+  [:div.login-page
+    [:div.form
+     (if @(rf/subscribe [::is-logged-in])
+       [:h2 "already logged in/stub"]
+       [login-form])]])
 
 (defn ui
   []
-  [:div
-   [:h1 "Hello world, it is now"]
-   [clock]
-   [color-input]])
+  [login-page])
 
 ;; -- Entry Point -------------------------------------------------------------
 
 (defn ^:export init
   []
-  (js/console.log "WAT")
-  (rf/dispatch-sync [:initialize])     ;; puts a value into application state
+  #_(rf/dispatch-sync [:initialize])     ;; puts a value into application state
   (reagent/render [ui]              ;; mount the application's ui into '<div id="app" />'
                   (js/document.getElementById "app")))
