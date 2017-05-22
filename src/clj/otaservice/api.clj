@@ -50,7 +50,8 @@
                         :body [creds Credentials]
                         :responses {401 {:schema UsError
                                          :description "No user with this login & pass found."}}
-                        :return {:token s/Str}
+                        :return {:token s/Str
+                                 :identity s/Str}
                         :summary "Authorize and receive jws token"
                         (handlers/login-handler creds))
 

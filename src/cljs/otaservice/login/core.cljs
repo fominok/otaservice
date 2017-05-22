@@ -43,9 +43,10 @@
 (rf/reg-event-fx
  :login-succeed
  (fn [cofx [_ resp]]
-   (let [val (:token resp)
+   (let [token (:token resp)
+         identity (:identity resp)
          db (:db cofx)]
-     {:set-local-storage [:token val]
+     {:set-local-storage [:token token :identity identity]
       :dispatch [:logged-in]})))
 
 
@@ -71,8 +72,9 @@
 ;; Write localstorage
 (rf/reg-fx
  :set-local-storage
- (fn [[key val]]
-   (.setItem js/localStorage (clj->js key) val)))
+ (fn [vec]
+   (doseq [kv (apply hash-map vec)]
+     (.setItem js/localStorage (clj->js (key kv)) (val kv)))))
 
 ;; Redirect effect
 (rf/reg-fx

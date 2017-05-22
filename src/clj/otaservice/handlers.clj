@@ -21,7 +21,8 @@
 
 (defn login-handler [creds]
   (if-let [user (find-user creds)]
-    (rh/ok {:token (jwt/sign {:user user} sec/secret)})
+    (rh/ok {:token (jwt/sign {:user user} sec/secret)
+            :identity user}) ;; TODO: add expiration date to signed jwt
     (rh/unauthorized {:error "Wrong credentials"})))
 
 (defn- ping-device! [user mac version]
