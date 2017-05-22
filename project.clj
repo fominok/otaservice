@@ -18,6 +18,7 @@
                  [midje "1.8.3"]
                  [day8.re-frame/http-fx "0.1.3"]
                  [cljs-ajax "0.6.0"]
+                 [binaryage/devtools "0.9.4"]
                  [postgresql/postgresql "9.3-1102.jdbc41"]]
   :source-paths ["src/cljc" "src/clj"]
   :plugins [[lein-ring "0.9.7"]
@@ -28,16 +29,20 @@
 
   ;;TODO add mount + figwheel
   :cljsbuild {:builds [{:source-paths ["src/cljs/otaservice/app"]
-                        :compiler {:main "otaservice.app.core"
-                                   :output-to "resources/public/js/compiled/app.js"
+                        :compiler {:output-to "resources/public/js/compiled/app.js"
                                    :output-dir "resources/public/js/compiled/out/app"
                                    :asset-path "js/compiled/out/app"
+                                   :main "otaservice.app.core"
+                                   :tooling-config {:devtools/config {:features-to-install :all}}
+                                   :preloads [devtools.preload]
                                    :pretty-print true}}
                        {:source-paths ["src/cljs/otaservice/login"]
-                        :compiler {:main "otaservice.login.core"
-                                   :output-to "resources/public/js/compiled/login.js"
+                        :compiler {:output-to "resources/public/js/compiled/login.js"
                                    :output-dir "resources/public/js/compiled/out/login"
                                    :asset-path "js/compiled/out/login"
+                                   :main "otaservice.login.core"
+                                   :tooling-config {:devtools/config {:features-to-install :all}}
+                                   :preloads [devtools.preload]
                                    :pretty-print true}}]}
   :hooks [leiningen.cljsbuild]
   :uberjar-name "otaservice-standalone.jar"
