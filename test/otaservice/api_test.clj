@@ -4,8 +4,10 @@
             [cheshire.core :as cheshire]
             [deploy :refer :all]
             [buddy.sign.jwt :as jwt]
+            [digest]
             [environ.core :refer [env]]
-            [otaservice.core :refer [app]]))
+            [otaservice.core :refer [app]]
+            [clojure.java.io :as io]))
 
 (defn parse-body [body]
   (cheshire/parse-string (slurp body) true))
@@ -20,7 +22,7 @@
            (mock/content-type "application/json")
            (mock/body (cheshire/generate-string query)))))
 
-(with-state-changes [(before :facts (migrate))
+#_(with-state-changes [(before :facts (migrate))
                      (after :facts (rollback-all))]
 
   (facts "about registration"
@@ -53,7 +55,7 @@
                  (:status response) => 409
                  (:error body) => "User already exists"))))
 
-(let [creds {:username "user" :password "password"}
+#_(let [creds {:username "user" :password "password"}
       inv-pass {:username "user" :password "wrong"}]
   (with-state-changes [(before :contents (do (migrate)
                                              (register-req creds)))
@@ -76,11 +78,17 @@
       other-creds {:username "otheruser" :password "anypassword"}
       non-user {:username "nobody" :password "password"}
       version "4.20"
-      mac "F9:EC:6C:C0:29:25"]
+      new-version "4.21"
+      mac "F9:EC:6C:C0:29:25"
+      mac-pure (clojure.string/replace mac #":" "")
+      firmware (java.io.File/createTempFile "firmware" ".bin")]
   (with-state-changes [(before :contents (do (migrate)
                                              (register-req creds)
-                                             (register-req other-creds)))
-                       (after :contents (rollback-all))]
+                                             (register-req other-creds)
+                                             (with-open [out (io/output-stream firmware)]
+                                               (.write out (byte-array [(byte 0x13) (byte 0x37) (byte 0x04) (byte 0x20)])))))
+                       (after :contents (do (rollback-all)
+                                            (.delete firmware)))]
     (let [ping-req #(app (-> (mock/request :get (str "/api/v1/" (:username %) "/ping"))
                              (mock/header "user-agent" "ESP8266-http-Update")
                              (mock/header "x-esp8266-sta-mac" mac)
@@ -112,4 +120,15 @@
                          resp-wrong (app (-> (mock/request :get (str "/api/v1/" (:username creds) "/devices"))
                                                other-auth-header))] ;; note token for other user
                      (:status resp-correct) => 200
-                     (:status resp-wrong) => 403))))))
+                     (:status resp-wrong) => 403))
+             (fact "device downloads recently uploaded firmware as it is"
+                   (let [upload-resp (app (-> (mock/request :post (str "/api/v1/" (:username creds) "/devices/" mac-pure "/upload"))
+                                              (mock/content-type "multipart/form-data")
+                                              (assoc :params {:version new-version
+                                                              :firmware {:bytes-stream (io/input-stream firmware)
+                                                                         :content-type "application/octet-stream"
+                                                                         :filename "firmware.bin"}})
+                                              auth-header))
+                         kek (print upload-resp)]
+
+                     (:status upload-resp) => 200))))))

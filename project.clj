@@ -31,7 +31,7 @@
                                    :output-dir "resources/public/js/compiled/out"
                                    :asset-path "js/compiled/out"
                                    :pretty-print true}}]}
-  :hooks [leiningen.cljsbuild]
+  ;; :hooks [leiningen.cljsbuild]
   :uberjar-name "otaservice-standalone.jar"
   :ring {:handler otaservice.core/app
          :init deploy/migrate
@@ -43,6 +43,7 @@
   :profiles {:dev {:resource-paths ["config/dev"]
                    :dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring/ring-mock "0.3.0"]
+                                  [digest "1.4.5"]
                                   [cheshire "5.7.1"]]}
              :midje {:env {:database-url "jdbc:postgresql://localhost/otatest"
                            :secret "supersecret"}}
